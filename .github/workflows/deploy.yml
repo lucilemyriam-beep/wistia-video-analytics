@@ -1,5 +1,5 @@
 
-name: Wistia Video Analytics CI
+name: Wistia Video Analytics CI/CD
 
 on:
   push:
@@ -7,10 +7,13 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,3 +25,28 @@ jobs:
 
       - name: Check Python syntax
         run: python -m py_compile lambda/lambda_function.py
+
+  deploy:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::593271843946:role/GitHubActionsWistiaDeployRole
+          aws-region: us-east-1
+
+      - name: Package Lambda
+        run: |
+          cd lambda
+          zip -q ../lambda-deployment.zip lambda_function.py
+
+      - name: Deploy Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name wistia-video-analytics-ingestion \
+            --zip-file fileb://lambda-deployment.zip
