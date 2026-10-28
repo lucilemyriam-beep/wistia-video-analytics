@@ -325,13 +325,13 @@ def save_media(bucket, state, token):
         latest_timestamp = updated_at or created_at
         previous_timestamp = watermarks.get(media_id)
 
-       # FR7: Track metadata changes without skipping engagement metrics.
-       # Video statistics can change even when metadata remains unchanged.
-       metadata_changed = (
-           previous_timestamp is None
-           or latest_timestamp is None
-           or latest_timestamp > previous_timestamp
-)
+        # FR7: Track metadata changes without skipping engagement metrics.
+        # Video statistics can change even when metadata remains unchanged.
+        metadata_changed = (
+            previous_timestamp is None
+            or latest_timestamp is None
+            or latest_timestamp > previous_timestamp
+        )
 
         stats_url = (
             f"https://api.wistia.com/v1/stats/medias/{media_id}.json"
